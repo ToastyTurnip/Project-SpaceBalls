@@ -9,7 +9,10 @@ public class GravityObject : MonoBehaviour
     private Rigidbody2D rb;
     // Start is called before the first frame update
     Action<GravityObject> GravObjects;
+    SpriteRenderer sr;
     string _id;
+
+    [SerializeField] Color staticColor = Color.yellow;
     public string ID
     {
         get
@@ -26,12 +29,14 @@ public class GravityObject : MonoBehaviour
     void OnEnable()
     {
         rb = GetComponent<Rigidbody2D>();
+        rb.bodyType = RigidbodyType2D.Static;
         rb.gravityScale = 0;
         PWorldController.Instance.RegisterGravCreated(NewGravObjectSpawned);
-
         PWorldController.Instance.RegisterOnTickTimer(Tick);
-
         PWorldController.Instance.RegisterGravDestroy(OnGravDestroy);
+
+        sr = GetComponent<SpriteRenderer>();
+        sr.color = Color.yellow;
         instances++;
     }
 
@@ -89,6 +94,10 @@ public class GravityObject : MonoBehaviour
 
     public void Tick()
     {
+        if (PWorldController.Instance.isPaused)
+        {
+            return;
+        }
         GravObjects?.Invoke(this);
     }
 
@@ -101,10 +110,27 @@ public class GravityObject : MonoBehaviour
 
     void SelfDestruct()
     {
+        instances--;
         PWorldController.Instance.UnregisterGravCreated(NewGravObjectSpawned);
         PWorldController.Instance.UnRegisterOnTickTimer(Tick);
         PWorldController.Instance.UnRegisterGravDestroy(OnGravDestroy);
         PWorldController.Instance.DestoryGravBroadcast(this);
+    }
+
+    public void ToggleBodyType()
+    {
+        if (rb.bodyType == RigidbodyType2D.Dynamic)
+        {
+            sr.color = staticColor;
+            rb.bodyType = RigidbodyType2D.Static;
+            return;
+        }
+        if (rb.bodyType == RigidbodyType2D.Static)
+        {
+            sr.color = Color.white;
+            rb.bodyType = RigidbodyType2D.Dynamic;
+            return;
+        }
     }
 
     void OnDestroy()

@@ -7,12 +7,22 @@ using UnityEngine.UI;
 public class PWorldController : MonoBehaviour
 {
     public static PWorldController Instance { get; protected set; }
-    public readonly Dictionary<Tuple<string,string>, AttractRule> AttractRules = new Dictionary<Tuple<string,string>, AttractRule>();
+    public Dictionary<Tuple<string,string>, AttractRule> AttractRules = new Dictionary<Tuple<string,string>, AttractRule>();
     public GameObject bodyPrefab;
     List<GravityObject> gravityObjects;
     Action<GravityObject> gravy;
     Action<GravityObject> ungravy;
     Action tickTime;
+    public bool isPaused { get; protected set; }
+
+    public void ToggleStatic(GravityObject grav)
+    {
+        grav.ToggleBodyType();
+    }
+    public void TogglePause()
+    {
+        isPaused = !isPaused;
+    }
     public AttractRule GetAttractRule(string a, string b)
     {
         Tuple<string,string> IDs = new Tuple<string, string>(a, b);
@@ -24,6 +34,20 @@ public class PWorldController : MonoBehaviour
     public void CreateAttractRule(string aid, string bid, bool posattr, float mag)
     {
         AttractRules[new Tuple<string, string>(aid,bid)] = new AttractRule(aid, bid, posattr, mag);
+    }
+
+    public void ClearRules()
+    {
+        AttractRules = new Dictionary<Tuple<string, string>, AttractRule>();
+    }
+
+    public void DestroyAllObjects()
+    {
+        int len = gravityObjects.Count;
+        for (int i = 0; i < len; i++)
+        {
+            Despawn(gravityObjects[0].gameObject);
+        }
     }
 
     public void Tick()
@@ -40,7 +64,7 @@ public class PWorldController : MonoBehaviour
             Instance = this;
         else
             Debug.LogError("Tried to initialize two world controllers.");
-
+        isPaused = true;
         gravityObjects = new List<GravityObject>();
     }
 
@@ -48,6 +72,9 @@ public class PWorldController : MonoBehaviour
     void FixedUpdate()
     {
         Tick();
+
+        if (Mathf.Abs(transform.position.x) > 1000 || Mathf.Abs(transform.position.y) > 1000)
+            PWorldController.Instance.Despawn(gameObject);
     }
 
     public void Spawn(string name, string ID, float mass, Vector2 position)
@@ -63,6 +90,12 @@ public class PWorldController : MonoBehaviour
         gravy(grav);
 
         go.transform.SetParent(transform);
+    }
+
+    public void Despawn(GameObject go)
+    {
+        gravityObjects.Remove(go.GetComponent<GravityObject>());
+        Destroy(go);
     }
 
     public void RegisterGravCreated(Action<GravityObject> callback)
