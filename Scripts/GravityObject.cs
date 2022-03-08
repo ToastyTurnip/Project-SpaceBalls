@@ -7,23 +7,69 @@ public class GravityObject : MonoBehaviour
 {
     private Rigidbody2D rb;
     // Start is called before the first frame update
-    Action<GravityObject> newGravObject;
-    public string ID { get; protected set; }
+    Action<GravityObject> GravObjects;
+    string _id;
+    public string ID
+    {
+        get
+        {
+            return _id;
+        }
+        set
+        {
+            _id = value;
+        }
+    }
+       
 
     void OnEnable()
     {
         rb = GetComponent<Rigidbody2D>();
         rb.gravityScale = 0;
+        PWorldController.Instance.RegisterGravCreated(NewGravObjectSpawned);
+        PWorldController.Instance.RegisterOnTickTimer(Tick);
     }
 
     public void RegisterNewGravityObject(Action<GravityObject> callback)
     {
-        newGravObject += callback;
+        GravObjects += callback;
     }
 
-    public void UnRegisterGravityObject(Action<GravityObject> callback)
+    private void UnRegisterGravityObject(Action<GravityObject> callback)
     {
-        newGravObject -= callback;
+        GravObjects -= callback;
+    }
+
+    public Action<GravityObject> getGravFunction()
+    {
+        return ApplyGravRule;
+    }
+
+    private void ApplyGravRule(GravityObject grav)
+    {
+        AttractRule rule = PWorldController.Instance.GetAttractRule(grav.ID, _id);
+        if (rule == null)
+        {
+            return;
+        }
+        Vector2 direction = rb.position - grav.getPosition();
+        if (!rule.isPositiveAttraction)
+            direction = -direction;
+
+        float distance = direction.magnitude;
+
+        float forceMagnitude = ((rb.mass * grav.getMass()) / Mathf.Pow(distance, 2))*rule.magnitude;
+        Vector2 force = direction.normalized * forceMagnitude;
+
+        rb.AddForce(force);
+    }
+
+    void NewGravObjectSpawned(GravityObject grav)
+    {
+        if (grav == this)
+            return;
+        GravObjects += grav.getGravFunction();
+        grav.RegisterNewGravityObject(ApplyGravRule);
     }
 
     public float getMass()
@@ -36,13 +82,8 @@ public class GravityObject : MonoBehaviour
         return transform.position;
     }
 
-    public void setID(string id)
-    {
-        ID = id;
-    }
-
     public void Tick()
     {
-        newGravObject(this);
+        GravObjects(this);
     }
 }

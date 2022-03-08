@@ -7,12 +7,23 @@ using UnityEngine.EventSystems;
 public class PInputController : MonoBehaviour
 {
     public static PInputController Instance { get; protected set; }
-    public bool inBuildMode { get; protected set; }
+
     [SerializeField] private float panSpeed = 1f;
-    public Text tm;
     public Text ntext;
     public Text idtext;
     public Slider massslider;
+    public Toggle inBuildMode;
+
+    public Text aID;
+    public Text bID;
+    public Toggle posAttr;
+    public Slider fmag;
+
+    public void CreateRule()
+    {
+        PWorldController.Instance.CreateAttractRule(aID.text,bID.text,posAttr.isOn,fmag.value);
+    }
+
     // Start is called before the first frame update
     void Start()
     {
@@ -20,22 +31,10 @@ public class PInputController : MonoBehaviour
             Instance = this;
         else
             Debug.LogError("Tried to create two input controller instances.");
-        inBuildMode = false;
     }
 
-    // Update is called once per frame
-    void Update()
+    void CameraPan()
     {
-        if (Input.GetKeyDown("q"))
-        {
-            inBuildMode = true;
-        }
-        if (Input.GetKeyDown("e"))
-        {
-            inBuildMode = false;
-        }
-
-
         if (Input.GetKey("w"))
         {
             Camera.main.transform.position = new Vector3(Camera.main.transform.position.x, Camera.main.transform.position.y + Time.deltaTime * panSpeed, Camera.main.transform.position.z);
@@ -52,13 +51,25 @@ public class PInputController : MonoBehaviour
         {
             Camera.main.transform.position = new Vector3(Camera.main.transform.position.x + Time.deltaTime * panSpeed, Camera.main.transform.position.y, Camera.main.transform.position.z);
         }
+    }
 
-        if (Input.GetMouseButtonUp(0) && inBuildMode && !EventSystem.current.IsPointerOverGameObject())
+    // Update is called once per frame
+    void Update()
+    {
+        if (!EventSystem.current.IsPointerOverGameObject())
         {
-            Vector2 spawnPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            PWorldController.Instance.Spawn("Jezebel", "a", 1.0f , spawnPos);
+            CameraPan();
         }
 
-        tm.text = "Build mode = " + inBuildMode.ToString();
+        if (Input.GetKeyDown("space") && !EventSystem.current.IsPointerOverGameObject())
+            PWorldController.Instance.Tick();
+
+        if (Input.GetMouseButtonUp(0) && inBuildMode.isOn && !EventSystem.current.IsPointerOverGameObject())
+        {
+            Vector2 spawnPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            PWorldController.Instance.Spawn(ntext.text, idtext.text, massslider.value , spawnPos);
+            ntext.text = "";
+        }
+
     }
 }
