@@ -7,39 +7,28 @@ using UnityEngine.UI;
 public class PWorldController : MonoBehaviour
 {
     public static PWorldController Instance { get; protected set; }
-    public readonly Dictionary<string, List<AttractRule>> AttractRules = new Dictionary<string, List<AttractRule>>();
+    public readonly Dictionary<Tuple<string,string>, AttractRule> AttractRules = new Dictionary<Tuple<string,string>, AttractRule>();
     public GameObject bodyPrefab;
     List<GravityObject> gravityObjects;
     Action<GravityObject> gravy;
+    Action<GravityObject> ungravy;
     Action tickTime;
     public AttractRule GetAttractRule(string a, string b)
     {
-        if (AttractRules.ContainsKey(a)){
-            foreach (AttractRule rule in AttractRules[a])
-            {
-                if (rule.bID == b)
-                {
-                    return rule;
-                }
-            }
-            return null;
-        }
+        Tuple<string,string> IDs = new Tuple<string, string>(a, b);
+        if (AttractRules.ContainsKey(IDs))
+            return AttractRules[IDs];
         return null;
     }
 
     public void CreateAttractRule(string aid, string bid, bool posattr, float mag)
     {
-        if (!AttractRules.ContainsKey(aid))
-        {
-            AttractRules[aid] = new List<AttractRule>();
-            
-        }
-        AttractRules[aid].Add(new AttractRule(aid, bid, posattr, mag));
+        AttractRules[new Tuple<string, string>(aid,bid)] = new AttractRule(aid, bid, posattr, mag);
     }
 
     public void Tick()
     {
-        Debug.Log("Ticked.");
+        //Debug.Log("Ticked.");
         if (tickTime != null)
             tickTime();
     }
@@ -58,7 +47,7 @@ public class PWorldController : MonoBehaviour
     // Update is called once per frame
     void FixedUpdate()
     {
-
+        Tick();
     }
 
     public void Spawn(string name, string ID, float mass, Vector2 position)
@@ -72,17 +61,45 @@ public class PWorldController : MonoBehaviour
         Rigidbody2D rb = go.GetComponent<Rigidbody2D>();
         rb.mass = mass;
         gravy(grav);
+
+        go.transform.SetParent(transform);
     }
 
     public void RegisterGravCreated(Action<GravityObject> callback)
     {
         gravy += callback;
     }
+
+    public void UnregisterGravCreated(Action<GravityObject> callback)
+    {
+        gravy -= callback;
+    }
     
+    public void RegisterGravDestroy(Action<GravityObject> callback)
+    {
+        ungravy += callback;
+    }
+
+    public void UnRegisterGravDestroy(Action<GravityObject> callback)
+    {
+        ungravy -= callback;
+    }
+
     public void RegisterOnTickTimer(Action callback)
     {
         tickTime += callback;
     }
+
+    public void UnRegisterOnTickTimer(Action callback)
+    {
+        tickTime -= callback;
+    }
+
+    public void DestoryGravBroadcast(GravityObject grav)
+    {
+        ungravy?.Invoke(grav);
+    }
+
 }
 
 public class AttractRule

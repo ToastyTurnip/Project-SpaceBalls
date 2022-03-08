@@ -5,6 +5,7 @@ using UnityEngine;
 
 public class GravityObject : MonoBehaviour
 {
+    public static int instances = 0;
     private Rigidbody2D rb;
     // Start is called before the first frame update
     Action<GravityObject> GravObjects;
@@ -27,10 +28,14 @@ public class GravityObject : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         rb.gravityScale = 0;
         PWorldController.Instance.RegisterGravCreated(NewGravObjectSpawned);
+
         PWorldController.Instance.RegisterOnTickTimer(Tick);
+
+        PWorldController.Instance.RegisterGravDestroy(OnGravDestroy);
+        instances++;
     }
 
-    public void RegisterNewGravityObject(Action<GravityObject> callback)
+    private void RegisterNewGravityObject(Action<GravityObject> callback)
     {
         GravObjects += callback;
     }
@@ -84,6 +89,26 @@ public class GravityObject : MonoBehaviour
 
     public void Tick()
     {
-        GravObjects(this);
+        GravObjects?.Invoke(this);
+    }
+
+    void OnGravDestroy(GravityObject grav)
+    {
+        if (grav == this)
+            return;
+        UnRegisterGravityObject(grav.getGravFunction());
+    }
+
+    void SelfDestruct()
+    {
+        PWorldController.Instance.UnregisterGravCreated(NewGravObjectSpawned);
+        PWorldController.Instance.UnRegisterOnTickTimer(Tick);
+        PWorldController.Instance.UnRegisterGravDestroy(OnGravDestroy);
+        PWorldController.Instance.DestoryGravBroadcast(this);
+    }
+
+    void OnDestroy()
+    {
+        SelfDestruct();   
     }
 }

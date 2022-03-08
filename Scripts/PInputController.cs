@@ -51,6 +51,13 @@ public class PInputController : MonoBehaviour
         {
             Camera.main.transform.position = new Vector3(Camera.main.transform.position.x + Time.deltaTime * panSpeed, Camera.main.transform.position.y, Camera.main.transform.position.z);
         }
+
+        //scrollwheel for controlling zoom
+        if (Input.GetAxis("Mouse ScrollWheel") < 0)
+            Camera.main.orthographicSize += panSpeed;
+        if (Input.GetAxis("Mouse ScrollWheel") > 0)
+            Camera.main.orthographicSize -= panSpeed;
+        Camera.main.orthographicSize = Mathf.Clamp(Camera.main.orthographicSize, 0.5f, 10f);
     }
 
     // Update is called once per frame
@@ -61,14 +68,28 @@ public class PInputController : MonoBehaviour
             CameraPan();
         }
 
-        if (Input.GetKeyDown("space") && !EventSystem.current.IsPointerOverGameObject())
-            PWorldController.Instance.Tick();
+        //if (Input.GetKeyDown("space") && !EventSystem.current.IsPointerOverGameObject())
+        //    PWorldController.Instance.Tick();
 
         if (Input.GetMouseButtonUp(0) && inBuildMode.isOn && !EventSystem.current.IsPointerOverGameObject())
         {
             Vector2 spawnPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            PWorldController.Instance.Spawn(ntext.text, idtext.text, massslider.value , spawnPos);
-            ntext.text = "";
+            if (ntext.text == "")
+            {
+                if (idtext.text == "")
+                {
+                    Debug.LogError("Must have an id.");
+                }
+                else
+                {
+                    PWorldController.Instance.Spawn(idtext.text, idtext.text, massslider.value, spawnPos);
+                }
+            }
+            else
+            {
+                PWorldController.Instance.Spawn(ntext.text, idtext.text, massslider.value, spawnPos);
+            }
+                
         }
 
     }
