@@ -11,6 +11,8 @@ public class PInputController : MonoBehaviour
     [SerializeField] private float panSpeed = 1f;
     public Text instances;
 
+    Transform following;
+
     public Text ntext;
     public Text idtext;
     public Slider massslider;
@@ -34,6 +36,8 @@ public class PInputController : MonoBehaviour
             Instance = this;
         else
             Debug.LogError("Tried to create two input controller instances.");
+
+        PWorldController.Instance.RegisterGravDestroy(OnGravDestroyed);
     }
 
     void CameraPan()
@@ -41,18 +45,22 @@ public class PInputController : MonoBehaviour
         if (Input.GetKey("w"))
         {
             Camera.main.transform.position = new Vector3(Camera.main.transform.position.x, Camera.main.transform.position.y + Time.deltaTime * panSpeed, Camera.main.transform.position.z);
+            UnFollow();
         }
         if (Input.GetKey("a"))
         {
             Camera.main.transform.position = new Vector3(Camera.main.transform.position.x - Time.deltaTime * panSpeed, Camera.main.transform.position.y, Camera.main.transform.position.z);
+            UnFollow();
         }
         if (Input.GetKey("s"))
         {
             Camera.main.transform.position = new Vector3(Camera.main.transform.position.x, Camera.main.transform.position.y - Time.deltaTime * panSpeed, Camera.main.transform.position.z);
+            UnFollow();
         }
         if (Input.GetKey("d"))
         {
             Camera.main.transform.position = new Vector3(Camera.main.transform.position.x + Time.deltaTime * panSpeed, Camera.main.transform.position.y, Camera.main.transform.position.z);
+            UnFollow();
         }
 
         if (Input.GetKeyDown("p"))
@@ -98,11 +106,41 @@ public class PInputController : MonoBehaviour
                 
         }
         InteractObjects();
+        Follow();
         instances.text = "Object Instances: " + GravityObject.instances.ToString();
+    }
+
+    void OnGravDestroyed(GravityObject grav)
+    {
+        if (grav.transform == following)
+        {
+            UnFollow();
+        }
+    }
+
+    private void Follow()
+    {
+        if (following != null)
+        {
+            Camera.main.transform.position = new Vector3(following.position.x,following.position.y,Camera.main.transform.position.z);
+        }
+    }
+
+    void UnFollow()
+    {
+        following = null;
     }
 
     private void InteractObjects()
     {
+        if (Input.GetMouseButton(2))
+        {
+            RaycastHit2D hit = Physics2D.Raycast(new Vector2(Camera.main.ScreenToWorldPoint(Input.mousePosition).x, Camera.main.ScreenToWorldPoint(Input.mousePosition).y), Vector2.zero, 0f);
+            if (hit.collider != null)
+            {
+                following = hit.collider.transform;
+            }
+        }
         if (Input.GetMouseButtonDown(1) && !inBuildMode.isOn)
         {
             RaycastHit2D hit = Physics2D.Raycast(new Vector2(Camera.main.ScreenToWorldPoint(Input.mousePosition).x, Camera.main.ScreenToWorldPoint(Input.mousePosition).y), Vector2.zero, 0f);
