@@ -29,14 +29,14 @@ public class GravityObject : MonoBehaviour
     void OnEnable()
     {
         rb = GetComponent<Rigidbody2D>();
-        rb.bodyType = RigidbodyType2D.Static;
+        //rb.bodyType = RigidbodyType2D.Static;
         rb.gravityScale = 0;
         PWorldController.Instance.RegisterGravCreated(NewGravObjectSpawned);
         PWorldController.Instance.RegisterOnTickTimer(Tick);
         PWorldController.Instance.RegisterGravDestroy(OnGravDestroy);
 
         sr = GetComponent<SpriteRenderer>();
-        sr.color = Color.yellow;
+        //sr.color = Color.yellow;
         instances++;
     }
 
@@ -98,6 +98,8 @@ public class GravityObject : MonoBehaviour
         {
             return;
         }
+        if(Mathf.Abs(transform.position.x) > 1000 || Mathf.Abs(transform.position.y) > 1000)
+            PWorldController.Instance.Despawn(gameObject);
         GravObjects?.Invoke(this);
     }
 

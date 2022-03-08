@@ -73,11 +73,9 @@ public class PWorldController : MonoBehaviour
     {
         Tick();
 
-        if (Mathf.Abs(transform.position.x) > 1000 || Mathf.Abs(transform.position.y) > 1000)
-            PWorldController.Instance.Despawn(gameObject);
     }
 
-    public void Spawn(string name, string ID, float mass, Vector2 position)
+    public void Spawn(string name, string ID, float mass, Vector2 position, bool staticSpawn)
     {
         GameObject go = Instantiate(bodyPrefab, position, Quaternion.identity);
         GravityObject grav = go.AddComponent<GravityObject>();
@@ -87,6 +85,15 @@ public class PWorldController : MonoBehaviour
         go.name = name;
         Rigidbody2D rb = go.GetComponent<Rigidbody2D>();
         rb.mass = mass;
+        if (staticSpawn)
+        {
+            rb.bodyType = RigidbodyType2D.Static;
+            go.GetComponent<SpriteRenderer>().color = Color.yellow;
+        }
+        else
+        {
+            rb.bodyType = RigidbodyType2D.Dynamic;
+        }
         gravy(grav);
 
         go.transform.SetParent(transform);

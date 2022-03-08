@@ -14,6 +14,7 @@ public class PInputController : MonoBehaviour
     public Text ntext;
     public Text idtext;
     public Slider massslider;
+    public Toggle staticSpawn;
     public Toggle inBuildMode;
 
     public Text aID;
@@ -87,12 +88,12 @@ public class PInputController : MonoBehaviour
                 }
                 else
                 {
-                    PWorldController.Instance.Spawn(idtext.text, idtext.text, massslider.value, spawnPos);
+                    PWorldController.Instance.Spawn(idtext.text, idtext.text, massslider.value, spawnPos, staticSpawn.isOn);
                 }
             }
             else
             {
-                PWorldController.Instance.Spawn(ntext.text, idtext.text, massslider.value, spawnPos);
+                PWorldController.Instance.Spawn(ntext.text, idtext.text, massslider.value, spawnPos, staticSpawn.isOn);
             }
                 
         }
